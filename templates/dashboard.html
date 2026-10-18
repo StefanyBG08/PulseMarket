@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseMarket | Panel de control</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+</head>
+<body>
+<div class="app-container">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">P</div>
+            <span>Pulse<span class="brand-light">Market</span></span>
+        </div>
+
+        <p class="menu-label">MENÚ PRINCIPAL</p>
+
+        <nav class="navigation">
+            <a href="#inicio" class="nav-link active">
+                <span>▦</span> Dashboard
+            </a>
+            <a href="#productos" class="nav-link">
+                <span>▣</span> Productos
+            </a>
+            <a href="#pedidos" class="nav-link">
+                <span>🛒</span> Pedidos
+            </a>
+            <a href="#analisis" class="nav-link">
+                <span>▥</span> Análisis de ventas
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="profile">
+                <div class="avatar">AD</div>
+                <div>
+                    <strong>Administrador</strong>
+                    <small>Panel de control</small>
+                </div>
+            </div>
+            <button id="themeToggle" class="theme-toggle">
+                ☾ <span> Cambiar tema</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content" id="inicio">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">RESUMEN GENERAL</p>
+                <h1>Dashboard</h1>
+                <p class="subtitle">Bienvenido de nuevo. Aquí está el resumen de tu tienda.</p>
+            </div>
+            <div class="topbar-right">
+                <span class="status"><span class="status-dot"></span> Sistema activo</span>
+                <div class="avatar">AD</div>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span>Ventas registradas</span>
+                    <span class="stat-icon purple">↗</span>
+                </div>
+                <h2 id="totalVentas">$0</h2>
+                <p class="stat-note">Suma de los pedidos de ejemplo</p>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span>Pedidos</span>
+                    <span class="stat-icon blue">▤</span>
+                </div>
+                <h2 id="totalPedidos">0</h2>
+                <p class="stat-note">Pedidos registrados en el sistema</p>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span>Productos</span>
+                    <span class="stat-icon green">▣</span>
+                </div>
+                <h2 id="totalProductos">0</h2>
+                <p class="stat-note">Productos en el catálogo</p>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span>Pedidos completados</span>
+                    <span class="stat-icon orange">✓</span>
+                </div>
+                <h2 id="pedidosCompletados">0</h2>
+                <p class="stat-note">Pedidos finalizados</p>
+            </article>
+        </section>
+
+        <section class="content-grid" id="analisis">
+            <article class="panel chart-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h3>Resumen de ventas</h3>
+                        <p>Comportamiento mensual de ventas</p>
+                    </div>
+                    <span class="tag">Últimos 12 meses</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h3>Inventario</h3>
+                        <p>Existencias por producto</p>
+                    </div>
+                </div>
+                <div id="inventoryList" class="inventory-list">
+                    <p class="muted">Cargando productos...</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel table-panel" id="pedidos">
+            <div class="panel-heading">
+                <div>
+                    <h3>Pedidos recientes</h3>
+                    <p>Últimas operaciones registradas</p>
+                </div>
+                <button id="refreshButton" class="secondary-button">↻ Actualizar</button>
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID PEDIDO</th>
+                        <th>CLIENTE</th>
+                        <th>PRODUCTO</th>
+                        <th>TOTAL</th>
+                        <th>ESTADO</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ordersTable">
+                    <tr><td colspan="5">Cargando pedidos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel table-panel" id="productos">
+            <div class="panel-heading">
+                <div>
+                    <h3>Catálogo de productos</h3>
+                    <p>Agrega productos a la lista de demostración</p>
+                </div>
+            </div>
+
+            <form id="productForm" class="product-form">
+                <input name="nombre" placeholder="Nombre del producto" required>
+                <input name="categoria" placeholder="Categoría" required>
+                <input name="precio" type="number" min="0" step="0.01"
+                       placeholder="Precio" required>
+                <input name="stock" type="number" min="0"
+                       placeholder="Existencias" required>
+                <button type="submit" class="primary-button">+ Agregar producto</button>
+            </form>
+
+            <p id="formMessage" class="form-message" aria-live="polite"></p>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>PRODUCTO</th>
+                        <th>CATEGORÍA</th>
+                        <th>PRECIO</th>
+                        <th>EXISTENCIAS</th>
+                    </tr>
+                    </thead>
+                    <tbody id="productsTable">
+                    <tr><td colspan="5">Cargando productos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            <span>PulseMarket © 2026</span>
+            <span>Panel de administración</span>
+        </footer>
+    </main>
+</div>
+</body>
+</html>
