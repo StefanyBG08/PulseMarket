@@ -52,5 +52,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+            - name: Verificar archivos del proyecto
+        run: |
+          pwd
+          ls -la
+          ls -la tests
+          python -c "import sys; print(sys.path); import app; print('app.py encontrado')"
+
       - name: Ejecutar pruebas automatizadas
-        run: pytest -q
+        run: python -m pytest -q
