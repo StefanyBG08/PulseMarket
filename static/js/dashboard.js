@@ -242,6 +242,37 @@ document.getElementById("productForm").addEventListener("submit", async event =>
     }
 });
 
+
+document.getElementById("orderForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const formulario = event.currentTarget;
+    const datos = Object.fromEntries(new FormData(formulario).entries());
+
+    datos.total = Number(datos.total);
+
+    const mensaje = document.getElementById("formMessage");
+
+    try {
+        await getJSON("/api/pedidos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+
+        formulario.reset();
+
+        mensaje.textContent = "Pedido registrado correctamente.";
+        mensaje.style.color = "#34d399";
+
+        await actualizarDashboard();
+    } catch (error) {
+        mensaje.textContent = error.message;
+        mensaje.style.color = "#f87171";
+    }
+});
+
+
 document.getElementById("refreshButton").addEventListener(
     "click",
     actualizarDashboard

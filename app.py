@@ -55,20 +55,37 @@ def estadisticas():
     try:
         with conectar_db() as conexion:
             with conexion.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT COUNT(*) AS total_prod FROM productos;")
-                prod = cursor.fetchone()
-                cursor.execute("SELECT COUNT(*) AS total_ped, COALESCE(SUM(total), 0) AS total_ventas FROM pedidos;")
-                ped = cursor.fetchone()
-                
+
+                cursor.execute("""
+                    SELECT COUNT(*) AS total_productos
+                    FROM productos;
+                """)
+                productos = cursor.fetchone()
+
+                cursor.execute("""
+                    SELECT
+                        COUNT(*) AS total_pedidos,
+                        COALESCE(SUM(total), 0) AS ventas_totales,
+                        COUNT(*) FILTER (
+                            WHERE LOWER(TRIM(estado)) = 'completado'
+                        ) AS pedidos_completados
+                    FROM pedidos;
+                """)
+                pedidos = cursor.fetchone()
+
                 return jsonify({
-                    "ventas_totales": float(ped["total_ventas"]),
-                    "total_pedidos": ped["total_ped"],
-                    "total_productos": prod["total_prod"],
-                    "pedidos_completados": 0,
+                    "ventas_totales": float(pedidos["ventas_totales"]),
+                    "total_pedidos": pedidos["total_pedidos"],
+                    "total_productos": productos["total_productos"],
+                    "pedidos_completados": pedidos["pedidos_completados"],
                     "ventas_mensuales": [0] * 12
                 })
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error al consultar estadísticas: {e}")
+        return jsonify({
+            "error": "No se pudieron consultar las estadísticas."
+        }), 500
 
 @app.route("/api/productos", methods=["GET", "POST"])
 def manejar_productos():
@@ -86,12 +103,72 @@ def manejar_productos():
                 cursor.execute("SELECT * FROM productos ORDER BY id ASC;")
                 return jsonify(cursor.fetchall())
 
-@app.route("/api/pedidos")
+
+@app.route("/api/pedidos", methods=["GET", "POST"])
 def obtener_pedidos():
-    with conectar_db() as conexion:
-        with conexion.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT * FROM pedidos ORDER BY id DESC;")
-            return jsonify(cursor.fetchall())
+    try:
+        with conectar_db() as conexion:
+            with conexion.cursor(cursor_factory=RealDictCursor) as cursor:
+
+                if request.method == "POST":
+                    data = request.get_json(silent=True) or {}
+
+                    cliente = str(data.get("cliente", "")).strip()
+                    producto = str(data.get("producto", "")).strip()
+                    estado = str(data.get("estado", "Pendiente")).strip()
+
+                    try:
+                        total = float(data.get("total", 0))
+                    except (TypeError, ValueError):
+                        return jsonify({
+                            "error": "El total debe ser un número válido."
+                        }), 400
+
+                    if not cliente or not producto:
+                        return jsonify({
+                            "error": "El cliente y el producto son obligatorios."
+                        }), 400
+
+                    if total <= 0:
+                        return jsonify({
+                            "error": "El total debe ser mayor que cero."
+                        }), 400
+
+                    estados_validos = {
+                        "Pendiente", "En proceso", "Completado", "Cancelado"
+                    }
+
+                    if estado not in estados_validos:
+                        return jsonify({
+                            "error": "El estado seleccionado no es válido."
+                        }), 400
+
+                    cursor.execute("""
+                        INSERT INTO pedidos (id, cliente, producto, total, estado)
+                        VALUES (
+                            'PED-' || UPPER(SUBSTRING(
+                                REPLACE(CAST(gen_random_uuid() AS TEXT), '-', '')
+                                FROM 1 FOR 8
+                            )),
+                            %s, %s, %s, %s
+                        )
+                        RETURNING *;
+                    """, (cliente, producto, total, estado))
+
+                    pedido = cursor.fetchone()
+                    conexion.commit()
+
+                    return jsonify(pedido), 201
+
+                cursor.execute("SELECT * FROM pedidos ORDER BY id DESC;")
+                return jsonify(cursor.fetchall())
+
+    except Exception as e:
+        print(f"Error al consultar o registrar pedidos: {e}")
+        return jsonify({
+            "error": "No se pudo procesar el pedido. Revisa la consola de Flask."
+        }), 500
+
 
 if __name__ == "__main__":
     inicializar_db()

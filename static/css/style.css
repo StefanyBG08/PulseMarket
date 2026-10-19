@@ -803,3 +803,36 @@ body.light-theme .progress {
         line-height: 1.5;
     }
 }
+
+
+/* Selector de estado: mismo estilo que los campos de PulseMarket */
+#orderForm select {
+    width: 100%;
+    min-width: 0;
+    background: #0d1425;
+    color: #edf2ff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 400;
+    outline: none;
+    cursor: pointer;
+}
+
+#orderForm select:focus {
+    border-color: var(--accent);
+}
+
+#orderForm select option {
+    background: var(--panel);
+    color: var(--text);
+}
+
+/* Selector en el tema claro */
+body.light-theme #orderForm select {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
