@@ -1,5 +1,5 @@
-
 Flask
 psycopg2-binary
 python-dotenv
 pytest
+pytest-playwright

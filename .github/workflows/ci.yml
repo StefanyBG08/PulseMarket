@@ -53,12 +53,32 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Instalar navegador para E2E
+        run: python -m playwright install --with-deps chromium
+
       - name: Verificar archivos del proyecto
         run: |
-          pwd
           ls -la
           ls -la tests
           python -c "import app; print('app.py encontrado correctamente')"
 
-      - name: Ejecutar pruebas automatizadas
-        run: python -m pytest -q
+      - name: Ejecutar pruebas unitarias
+        run: python -m pytest -q tests/test_app.py
+
+      - name: Iniciar Flask para las pruebas E2E
+        run: |
+          python -c "from app import inicializar_db; inicializar_db(); from app import app; app.run(host='127.0.0.1', port=5000)" > /tmp/pulsemarket.log 2>&1 &
+
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/ > /dev/null; then
+              echo "Flask está listo."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat /tmp/pulsemarket.log
+          exit 1
+
+      - name: Ejecutar pruebas E2E
+        run: python -m pytest -q tests/e2e
